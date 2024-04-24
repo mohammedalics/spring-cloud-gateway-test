@@ -1,0 +1,44 @@
+server:
+  servlet:
+    context-path: demo
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: route1
+          uri: http://localhost:8080/
+          predicates:
+            - Path=/**
+            - name: Geo
+              args:
+                countries: [ "DE", "FR" ]
+          filters:
+            - name: AddLogisticProvidersHeader
+              args:
+                headerName: X-Shipping-Providers
+            - RewritePath=/(?<segment>.*), /v1/$\{segment}
+            - SetStatus=200
+        - id: route2
+          uri: http://localhost:8080/
+          predicates:
+            - Path=/**
+          filters:
+            - RewritePath=/(?<segment>.*), /v2/$\{segment}
+            - SetStatus=200
+
+
+  application:
+    name: gatwaytest
+logging:
+  level:
+    reactor:
+      netty:
+        http:
+          server: TRACE
+          client: TRACE
+    org:
+      springframework:
+        cloud:
+          gateway: TRACE
+        web:
+        HttpLogging: TRACE

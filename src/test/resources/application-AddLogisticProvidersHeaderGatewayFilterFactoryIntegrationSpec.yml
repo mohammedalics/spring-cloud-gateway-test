@@ -1,0 +1,12 @@
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: route_all_to_oauth
+          uri: http://localhost:${wiremock.server.port}
+          predicates:
+            - Path=/**
+          filters:
+            - name: AddLogisticProvidersHeader
+              args:
+                headerName: X-Shipping-Providers

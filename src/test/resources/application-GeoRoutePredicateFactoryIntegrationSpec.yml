@@ -1,0 +1,20 @@
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: route_based_target_predicate
+          uri: http://localhost:${wiremock.server.port}
+          predicates:
+            - Path=/**
+            - name: Geo
+              args:
+                countries: [ "DE", "FR" ]
+          filters:
+            - PrefixPath=/prefix
+        - id: route_others
+          uri: http://localhost:${wiremock.server.port}
+          predicates:
+            - Path=/**
+          filters:
+            - PrefixPath=/prefix
+

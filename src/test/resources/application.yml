@@ -1,0 +1,18 @@
+spring:
+  main:
+    web-application-type: reactive
+  webflux:
+    base-path: gatwaytest
+logging:
+  level:
+    reactor:
+      netty:
+        http:
+          server: DEBUG
+          client: DEBUG
+    org:
+      springframework:
+        cloud:
+          gateway: TRACE
+        web:
+        HttpLogging: TRACE
