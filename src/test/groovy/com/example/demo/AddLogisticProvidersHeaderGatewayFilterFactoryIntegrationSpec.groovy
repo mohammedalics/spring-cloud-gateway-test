@@ -9,19 +9,28 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*
 @ActiveProfiles("AddLogisticProvidersHeaderGatewayFilterFactoryIntegrationSpec")
 class AddLogisticProvidersHeaderGatewayFilterFactoryIntegrationSpec extends AbstractIntegrationSpec {
 
+
+    public static final String SHIPPING_COMPANIES_RESULT = "shippingCompaniesResult"
+
     @Unroll
-    def "given request from #country by ip #ip, expected status #expectedStatus"() {
+    def "given request from #country by ip #ip, expected shipping providers header existence #expectedHeaderExistence and expected header value #expectedHeaderValue"() {
         given:
 
         wireMockServer.stubFor(
                 any(anyUrl()).atPriority(1)
                         .withHeader("X-Shipping-Providers", matching(".*"))
-                        .willReturn(aResponse().withStatus(200))
+                        .willReturn(aResponse().withStatus(200).with {
+                            if (expectedHeaderValue != null) {
+                                it.withHeader(SHIPPING_COMPANIES_RESULT, expectedHeaderValue)
+                            }
+                            return it
+                        }
+                        )
         )
 
         wireMockServer.stubFor(
                 any(anyUrl()).atPriority(2)
-                        .willReturn(aResponse().withStatus(500))
+                        .willReturn(aResponse().withStatus(200))
         )
 
         when:
@@ -36,13 +45,17 @@ class AddLogisticProvidersHeaderGatewayFilterFactoryIntegrationSpec extends Abst
         def result = request.exchange()
 
         then:
-        result.expectStatus().isEqualTo(expectedStatus)
+        if (expectedHeaderExistence) {
+            result.expectHeader().valueEquals(SHIPPING_COMPANIES_RESULT, expectedHeaderValue)
+        } else {
+            result.expectHeader().doesNotExist(SHIPPING_COMPANIES_RESULT)
+        }
 
         where:
-        country   | ip              | expectedStatus
-        "France"  | "103.232.172.0" | 200
-        "Germany" | "77.21.147.170" | 200
-        "USA"     | "30.0.0.0"      | 500
+        country   | ip              | expectedHeaderExistence | expectedHeaderValue
+        "France"  | "103.232.172.0" | true                    | "HERMES"
+        "Germany" | "77.21.147.170" | true                    | "DHL,HERMES"
+        "USA"     | "30.0.0.0"      | false                   | null
     }
 
 }
